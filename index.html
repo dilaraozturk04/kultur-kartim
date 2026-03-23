@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kültür Kartım | Kültürel Kimlik & Bağlantı</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --main: #6366f1; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --accent: #818cf8; }
+        .theme-blue { --main: #4f46e5; --bg: #f5f7ff; }
+        .theme-dark { --main: #a5b4fc; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        .theme-green { --main: #059669; --bg: #f0fdf4; }
+        .theme-sunset { --main: #e11d48; --bg: #fff1f2; }
+        .theme-royal { --main: #7c3aed; --bg: #f5f3ff; }
+
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; transition: 0.3s; }
+        .container { width: 100%; max-width: 550px; }
+        .card { background: var(--card); padding: 40px; border-radius: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.2); position: relative; overflow: hidden; }
+        .card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 8px; background: linear-gradient(90deg, var(--main), var(--accent)); }
+
+        .manifesto { background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(129,140,248,0.05) 100%); border-radius: 24px; padding: 25px; margin-bottom: 30px; border-left: 6px solid var(--main); }
+        .manifesto h4 { margin: 0 0 10px; color: var(--main); font-weight: 800; }
+        .manifesto p { margin: 0; font-size: 0.95rem; line-height: 1.6; opacity: 0.9; }
+
+        .match-box { background: #dbeafe; color: #1e40af; padding: 25px; border-radius: 20px; margin-bottom: 25px; border-left: 6px solid #3b82f6; }
+        .ice-breaker-tip { background: #fef3c7; color: #92400e; padding: 15px; border-radius: 15px; margin-bottom: 25px; font-size: 0.85rem; border-left: 4px solid #f59e0b; }
+
+        .section-title { font-weight: 800; color: var(--main); margin: 30px 0 15px; display: flex; align-items: center; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 2px; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: var(--main); margin-left: 15px; opacity: 0.2; }
+
+        input, select { width: 100%; padding: 15px; margin-bottom: 10px; border: 2px solid rgba(0,0,0,0.05); border-radius: 15px; background: var(--card); color: var(--text); font-family: inherit; box-sizing: border-box; }
+        button { width: 100%; padding: 18px; background: linear-gradient(90deg, var(--main), var(--accent)); color: white; border: none; border-radius: 15px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 1.1rem; }
+        .action-btn { font-size: 0.65rem; font-weight: 800; text-decoration: none; color: white; background: var(--main); padding: 7px 12px; border-radius: 10px; }
+        .song-btn { background: #ef4444; }
+        .qr-img { width: 240px; border: 12px solid white; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); margin: 20px 0; }
+        .list { padding: 0; margin: 0; }
+        .list li { background: rgba(0,0,0,0.02); margin-bottom: 10px; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; list-style: none; gap: 8px; }
+    </style>
+</head>
+<body class="theme-blue">
+    <div class="container" id="app"></div>
+
+    <script>
+        const ICE_BREAKERS = {
+            movie: ["Sence bu yapımın sonu farklı mı bitmeliydi?", "Hangi karakterle kendini özdeşleştiriyorsun?", "Bu yapımı tek cümleyle anlatır mısın?"],
+            book: ["Bu kitap hayata bakışını nasıl değiştirdi?", "Sence bu kitabın filmi çekilse başrolde kim oynamalı?", "Bu yazardan başka neler okudun?"],
+            song: ["Bu şarkıyı ilk duyduğunda ne hissettin?", "Bu sanatçının konserine gitmek ister misin?", "Bu şarkı sence hangi ruh halinde dinlenir?"],
+            general: ["En büyük çocukluk hayalim neydi?", "En garip hobim sence hangisi olabilir?", "Şu an nerede olmak isterdim?", "Hayatımdaki en önemli dönüm noktası neydi?"]
+        };
+
+        const app = document.getElementById("app");
+
+        function escapeHtml(s) {
+            return String(s)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function randomFrom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function getUsers() {
+            try {
+                return JSON.parse(localStorage.getItem("kk_users") || "{}");
+            } catch {
+                return {};
+            }
+        }
+
+        function setUsers(users) {
+            localStorage.setItem("kk_users", JSON.stringify(users));
+        }
+
+        function getList(form, prefix) {
+            const out = [];
+            for (let i = 0; i < 5; i += 1) {
+                const v = form.get(`${prefix}_${i}`);
+                if (v && v.trim()) out.push(v.trim());
+            }
+            return out;
+        }
+
+        function setTheme(theme) {
+            document.body.className = `theme-${theme || "blue"}`;
+        }
+
+        function renderList(items, title, search, btn, extraClass = "") {
+            if (!items || items.length === 0) return "";
+            return `
+                <span class="section-title">${title}</span>
+                <ul class="list">
+                    ${items.map((item) => `
+                        <li>
+                            <span style="font-weight:600; font-size:0.95rem">${escapeHtml(item)}</span>
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(item + " " + search)}" target="_blank" class="action-btn ${extraClass}">${btn}</a>
+                        </li>
+                    `).join("")}
+                </ul>
+            `;
+        }
+
+        function renderHome() {
+            setTheme("blue");
+            app.innerHTML = `
+                <div class="card">
+                    <h1 style="margin:0; font-weight:800; font-size:2.5rem;">Kültür Kartım <span style="color:var(--main)">.</span></h1>
+                    <div class="manifesto">
+                        <h4>✨ İletişimin Büyüsü</h4>
+                        <p>Gerçek bir bağ kurmak, karşındakinin ruhundaki renkleri görmektir. Sevdiğin bir şarkı, altını çizdiğin bir satır aslında kim olduğunun sessiz birer tanığıdır. Hobilerin, zevklerin ve hayallerinle kendi dijital imzanı oluştur. Çünkü en samimi sohbetler, "Sen de mi o filmi seviyorsun?" dediğimiz anda başlar.</p>
+                    </div>
+
+                    <form id="profileForm">
+                        <span style="font-size:0.8rem; font-weight:600; opacity:0.6; margin-left:5px;">Profil Bilgileri</span>
+                        <input type="text" name="username" placeholder="Adın nedir?" required>
+                        <input type="text" name="motto" placeholder="Haftalık Motton (Örn: Her gün yeni bir başlangıçtır.)">
+                        <input type="text" name="social" placeholder="Instagram / Twitter Kullanıcı Adın">
+
+                        <span style="font-size:0.8rem; font-weight:600; opacity:0.6; margin-left:5px;">Profil Ruh Hali (Teman Uygulanır)</span>
+                        <select name="theme">
+                            <option value="blue">🔵 Klasik Mavi (Güven Verir)</option>
+                            <option value="dark">🌑 Modern Gece (Derinlik Katar)</option>
+                            <option value="green">🌿 Doğa Yeşili (Samimiyet)</option>
+                            <option value="sunset">🌅 Gün Batımı (Enerji Verir)</option>
+                            <option value="royal">👑 Yaratıcı Mor (İlham Verir)</option>
+                        </select>
+
+                        <p style="font-size:0.75rem; color:#888; margin:20px 0 0 5px;">* İstediğin alanları doldurabilirsin.</p>
+                        <span class="section-title">🎬 Favori 5 Film / Dizi</span>
+                        ${Array.from({ length: 5 }).map((_, i) => `<input type="text" name="movie_${i}" placeholder="${i + 1}. Film">`).join("")}
+                        <span class="section-title">📚 Favori 5 Kitap</span>
+                        ${Array.from({ length: 5 }).map((_, i) => `<input type="text" name="book_${i}" placeholder="${i + 1}. Kitap">`).join("")}
+                        <span class="section-title">🎵 Favori 5 Şarkı</span>
+                        ${Array.from({ length: 5 }).map((_, i) => `<input type="text" name="song_${i}" placeholder="${i + 1}. Şarkı">`).join("")}
+                        <span class="section-title">🎨 En Sevdiğin 5 Hobi</span>
+                        ${Array.from({ length: 5 }).map((_, i) => `<input type="text" name="hobby_${i}" placeholder="${i + 1}. Hobin">`).join("")}
+
+                        <button type="submit">Profilimi Dünyaya Aç 🚀</button>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById("profileForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const form = new FormData(e.target);
+                const name = (form.get("username") || "").trim();
+                if (!name) return;
+
+                const user = {
+                    name,
+                    motto: (form.get("motto") || "").trim(),
+                    social: (form.get("social") || "").trim(),
+                    theme: form.get("theme") || "blue",
+                    movies: getList(form, "movie"),
+                    books: getList(form, "book"),
+                    songs: getList(form, "song"),
+                    hobbies: getList(form, "hobby")
+                };
+
+                const users = getUsers();
+                users[name] = user;
+                setUsers(users);
+                sessionStorage.setItem("kk_me", name);
+                location.hash = `#/result/${encodeURIComponent(name)}`;
+            });
+        }
+
+        function renderResult(name) {
+            const users = getUsers();
+            const user = users[name];
+            if (!user) return renderNotFound();
+            setTheme(user.theme);
+            const profileUrl = `${location.origin}${location.pathname}#/profile/${encodeURIComponent(name)}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(profileUrl)}`;
+            app.innerHTML = `
+                <div class="card" style="text-align:center">
+                    <h2 style="margin-top:0">Bağlantı Kartın Hazır! 🏁</h2>
+                    <img src="${qrUrl}" class="qr-img" alt="QR Kod">
+                    <p style="opacity:0.85">Bu QR kod, seçtiğin temada senin dünyanı yansıtacak.</p>
+                    <div style="margin-top:20px">
+                        <a href="#/profile/${encodeURIComponent(name)}" class="action-btn" style="padding:15px 30px; font-size:1rem; border-radius:15px; display:inline-block;">ÖNİZLEMEYİ GÖR →</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProfile(name) {
+            const users = getUsers();
+            const user = users[name];
+            if (!user) return renderNotFound();
+            setTheme(user.theme);
+
+            const meName = sessionStorage.getItem("kk_me");
+            let matches = [];
+            let question = "";
+            const randomQ = randomFrom(ICE_BREAKERS.general);
+
+            if (meName && meName !== name && users[meName]) {
+                const me = users[meName];
+                ["movies", "books", "songs"].forEach((cat) => {
+                    const common = new Set(
+                        me[cat].map((x) => x.toLowerCase()).filter((x) => user[cat].map((y) => y.toLowerCase()).includes(x))
+                    );
+                    if (common.size > 0) {
+                        matches = matches.concat(user[cat].filter((x) => common.has(x.toLowerCase())));
+                        const key = cat === "movies" ? "movie" : (cat === "books" ? "book" : "song");
+                        question = randomFrom(ICE_BREAKERS[key]);
+                    }
+                });
+            }
+
+            app.innerHTML = `
+                ${matches.length > 0 ? `
+                    <div class="match-box">
+                        <h3 style="margin:0">🔥 Bir Bağlantı Yakalandı!</h3>
+                        <p>İkiniz de şunları seviyorsunuz: <b>${escapeHtml(matches.join(", "))}</b></p>
+                        <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:12px 0;">
+                        <p style="font-size:0.95rem; font-style:italic;"><b>Buz Kıran:</b> ${escapeHtml(question)}</p>
+                    </div>
+                ` : `
+                    <div class="ice-breaker-tip">
+                        💡 <b>Buz Kıran Önerisi:</b> Henüz ortak bir favori yok ama sohbeti şu soruyla başlatabilirsin: <br><i>"${escapeHtml(randomQ)}"</i>
+                    </div>
+                `}
+                <div class="card">
+                    <div style="text-align:center; margin-bottom:30px">
+                        <h1 style="margin:0; font-size:2.8rem;">${escapeHtml(user.name.toUpperCase())}</h1>
+                        ${user.motto ? `<p style="font-style:italic; opacity:0.8; margin:10px 0;">"${escapeHtml(user.motto)}"</p>` : ""}
+                        ${user.social ? `<a href="#" style="font-size:0.8rem; color:var(--main); text-decoration:none; font-weight:700;">@${escapeHtml(user.social)}</a>` : ""}
+                    </div>
+
+                    ${renderList(user.movies, "🎬 FİLMLER", "film konusu", "İNCELE 🔍")}
+                    ${renderList(user.books, "📚 KİTAPLAR", "kitap özeti", "ÖZET 📖")}
+                    ${renderList(user.songs, "🎵 ŞARKILAR", "dinle youtube", "DİNLE 🎧", "song-btn")}
+
+                    ${user.hobbies.length ? `
+                        <span class="section-title">🎨 HOBİLER & İLGİ ALANLARI</span>
+                        <ul class="list">
+                            ${user.hobbies.map((h) => `<li style="font-weight:600;">${escapeHtml(h)}</li>`).join("")}
+                        </ul>
+                    ` : ""}
+
+                    <div style="text-align:center; margin-top:40px">
+                        <a href="#/" style="color:var(--main); text-decoration:none; font-weight:800; font-size:0.9rem;">← Sen de Kendi Profilini Yap</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNotFound() {
+            setTheme("blue");
+            app.innerHTML = `
+                <div class="card" style="text-align:center">
+                    <h2>Profil bulunamadı!</h2>
+                    <a href="#/" class="action-btn" style="display:inline-block; margin-top:10px;">Ana Sayfa</a>
+                </div>
+            `;
+        }
+
+        function router() {
+            const hash = location.hash || "#/";
+            const parts = hash.slice(2).split("/");
+            const route = parts[0] || "";
+            const name = decodeURIComponent(parts[1] || "");
+
+            if (route === "") return renderHome();
+            if (route === "result" && name) return renderResult(name);
+            if (route === "profile" && name) return renderProfile(name);
+            return renderNotFound();
+        }
+
+        window.addEventListener("hashchange", router);
+        router();
+    </script>
+</body>
+</html>
